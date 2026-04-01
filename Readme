@@ -1,2 +1,136 @@
-Hello this is the readme for Project-Engineering
+# 🚀 Project Engineering Track
 
+> A production-focused engineering track designed to transform you from a **coder** into a **product engineer**.
+
+---
+
+## 📌 Overview
+
+The **Project Engineering Track** by Kalvium runs parallel to the traditional MERN stack curriculum, but with a critical shift in mindset and tooling.
+
+Instead of building basic applications, this track emphasizes **real-world engineering practices**, including structured data modeling, scalable architecture, and deployment-first development.
+
+### 🔄 Key Shifts in Approach
+
+| Traditional Approach | Project Engineering Track |
+|---------------------|--------------------------|
+| MongoDB (schema-less) | PostgreSQL (strict schema) |
+| Code-first | Problem-first |
+| Local development | Deployment-first |
+| Feature building | Product engineering |
+
+---
+
+## 🎯 Objectives
+
+- Develop **production-grade applications**
+- Learn **structured backend and frontend architecture**
+- Build systems with **scalability, performance, and security**
+- Integrate **AI as part of system design**
+- Adopt **industry-standard workflows and tooling**
+
+---
+
+## 🧭 Roadmap: 9 Milestones
+
+1. Modern Workflow & "Vibe Coding"
+2. Requirement Engineering & Problem Framing
+3. Data Modeling & Schema Design
+4. Backend Architecture & API Design
+5. Frontend Architecture & State Flow
+6. Authentication & Authorization (RBAC)
+7. Performance & Scalability Basics
+8. Deployment Engineering & Docker
+9. Building AI-Powered Features
+
+---
+
+## 🛠️ Tech Stack
+
+**Backend:** Node.js, Express.js, PostgreSQL, Prisma ORM  
+**Frontend:** React.js  
+**DevOps:** Docker, Git, REST APIs
+
+---
+
+## ⚙️ Prerequisites
+
+- Node.js (v18+)
+- npm or yarn
+- PostgreSQL
+- Docker
+- Git
+
+---
+
+## 📦 Installation & Setup
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/<your-username>/project-engineering.git
+cd project-engineering
+```
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Setup Environment Variables
+
+Create a `.env` file:
+
+```
+DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/project_engineering"
+PORT=3000
+```
+
+### Setup Prisma
+
+```bash
+npx prisma init
+npx prisma migrate dev --name init
+npx prisma generate
+```
+
+### Run the App
+
+```bash
+npm run dev
+```
+
+### Run with Docker (Optional)
+
+```bash
+docker-compose up --build
+```
+
+---
+
+## 🧱 Project Structure
+
+```
+project-engineering/
+├── backend/
+├── frontend/
+├── prisma/
+├── docker/
+└── README.md
+```
+
+---
+
+## 🚀 Outcome
+
+- Build scalable full-stack apps  
+- Think like a product engineer  
+- Write production-ready code  
+- Deploy real-world systems  
+
+---
+
+## 📄 License
+
+Educational use only.
