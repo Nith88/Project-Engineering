@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { callAI } = require('./callAI');
 const fs = require('fs');
