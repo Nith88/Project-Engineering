@@ -34,11 +34,40 @@ async function sendMessage() {
     // 3. Clear input
     messageInput.value = "";
 
-    // TODO: Call your backend /chat route here
-    // Send the full `messages` array — not just the latest message
-    // Hint: fetch('http://localhost:3000/chat', { method: 'POST', ... })
-    // On response: add { role: 'assistant', content: reply } to messages
-    // Render the assistant bubble in chatDisplay
+    // Disable button while loading
+    sendBtn.disabled = true;
+
+    try {
+        // 4. Call backend /chat route with full message history
+        const response = await fetch('http://localhost:3000/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ messages })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Request failed");
+        }
+
+        const reply = data.reply;
+
+        // 5. Add assistant response to state
+        messages.push({ role: "assistant", content: reply });
+
+        // 6. Render assistant message
+        renderMessage("assistant", reply);
+
+    } catch (error) {
+        console.error("Error:", error);
+        renderMessage("assistant", "⚠️ Error: Unable to get response");
+    }
+
+    // Re-enable button
+    sendBtn.disabled = false;
 }
 
 // Event Listeners
