@@ -1,116 +1,134 @@
-const express = require('express')
-var app = express()
-app.use(express.json())
-var confessions = []
-var x = 0
-function handleAll(req, res, t) {
-  var d = req.body
-  var r = req.params
-  if (t === 'create') {
-    if (!d) {
-      res.status(400).json({msg: 'bad'})
-    } else {
-      if (d.text) {
-        if (d.text.length < 500) {
-          if (d.text.length > 0) {
-            var categories = ["bug", "deadline", "imposter", "vibe-code"]
-            if (categories.includes(d.category)) {
-              var tmp = {
-                id: ++x,
-                text: d.text,
-                category: d.category,
-                created_at: new Date()
-              }
-              confessions.push(tmp)
-              console.log("added one info " + tmp.id)
-              res.status(201).json(tmp)
-            } else {
-              res.status(400).send("category not in stuff")
-            }
-          } else {
-            res.status(400).send("too short")
-          }
-        } else {
-          res.status(400).json({ error: "text too big, must be less than 500 characters long buddy" })
-        }
-      } else {
-        res.status(400).json({msg: 'need text'})
-      }
-    }
-  } else if (t === 'getAll') {
-    let arr = confessions.sort((a, b) => b.created_at - a.created_at)
-    var result={
-      data: arr,
-      count: arr.length
-    }
-    console.log("fetching all data result")
-    res.json(result)
-  } else if (t === 'getOne') {
-    var i = parseInt(r.id)
-    const info = confessions.find(fn => fn.id === i)
-    if (info) {
-      if (info.text) {
-        console.log("found info with " + info.text.length + " chars")
-        res.json(info)
-      } else {
-        res.status(500).send("broken")
-      }
-    } else {
-      res.status(404).json({msg: 'not found'})
-    }
-  } else if (t === 'getCat') {
-    var cat = r.cat
-    var cats = ["bug", "deadline", "imposter", "vibe-code"]
-    if (cats.includes(cat)) {
-      let stuff = confessions.filter(function(x) { 
-        if (x.category === cat) {
-          return true
-        }
-        return false
-      }).reverse()
-      res.json(stuff)
-    } else {
-      res.status(400).json({msg: 'invalid category'})
-    }
-  } else if (t === 'del') {
-    if (req.headers['x-delete-token'] !== 'supersecret123') {
-      res.status(403).json({msg: 'no permission'})
-    } else {
-      if (r.id) {
-        var i = parseInt(r.id)
-        var handler = confessions.findIndex(item => item.id === i)
-        if (handler !== -1) {
-          var res2 = confessions.splice(handler, 1)
-          console.log("deleted something")
-          res.json({msg: "ok", item: res2[0]})
-        } else {
-          res.status(404).json({msg: "not found buddy"})
-        }
-      } else {
-        res.status(400).send("no id")
-      }
-    }
-  } else {
-    res.status(500).send("error")
-  }
+require('dotenv').config();
+
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+// In-memory storage for confessions
+let confessions = [];
+let confessionIdCounter = 0;
+
+// Allowed categories (centralized to avoid duplication)
+const VALID_CATEGORIES = ["bug", "deadline", "imposter", "vibe-code"];
+
+/**
+ * Validate confession input before processing
+ * Ensures only valid data is stored in the system
+ */
+function validateConfessionInput(data) {
+  if (!data || !data.text) return "need text";
+  if (data.text.length === 0) return "too short";
+  if (data.text.length >= 500) return "text too big";
+  if (!VALID_CATEGORIES.includes(data.category)) return "invalid category";
+  return null;
 }
-app.post('/api/v1/confessions', function(req, res) { handleAll(req, res, 'create') })
-app.get('/api/v1/confessions', (req, res) => { handleAll(req, res, 'getAll') })
-app.get('/api/v1/confessions/:id', function(req, res) { 
-  handleAll(req, res, 'getOne') 
-})
-app.get('/api/v1/confessions/category/:cat', function(req, res) { 
-  if (req.params.cat) {
-    handleAll(req, res, 'getCat') 
+
+/**
+ * Create a new confession
+ * Validates input and stores data safely
+ */
+app.post('/api/v1/confessions', (req, res) => {
+  const error = validateConfessionInput(req.body);
+
+  if (error) {
+    return res.status(400).json({ msg: error });
   }
-})
-app.route('/api/v1/confessions/:id').delete(function(req, res) {
-  handleAll(req, res, 'del')
-})
-app.listen(3000, function() {
-  var startStr = 'running on 3000'
-  console.log(startStr)
-})
-if (confessions.length > 500) {
-  console.log("too many")
-}
+
+  const newConfession = {
+    id: ++confessionIdCounter,
+    text: req.body.text,
+    category: req.body.category,
+    created_at: new Date()
+  };
+
+  confessions.push(newConfession);
+
+  console.log(`Added confession with ID ${newConfession.id}`);
+  res.status(201).json(newConfession);
+});
+
+/**
+ * Get all confessions
+ * Sorted by latest first for better readability
+ */
+app.get('/api/v1/confessions', (req, res) => {
+  const sortedConfessions = [...confessions].sort(
+    (a, b) => b.created_at - a.created_at
+  );
+
+  res.json({
+    data: sortedConfessions,
+    count: sortedConfessions.length
+  });
+});
+
+/**
+ * Get a single confession by ID
+ * Returns 404 if not found
+ */
+app.get('/api/v1/confessions/:id', (req, res) => {
+  const id = Number(req.params.id);
+
+  const confession = confessions.find(c => c.id === id);
+
+  if (!confession) {
+    return res.status(404).json({ msg: 'not found' });
+  }
+
+  res.json(confession);
+});
+
+/**
+ * Get confessions by category
+ * Validates category before filtering
+ */
+app.get('/api/v1/confessions/category/:cat', (req, res) => {
+  const category = req.params.cat;
+
+  if (!VALID_CATEGORIES.includes(category)) {
+    return res.status(400).json({ msg: 'invalid category' });
+  }
+
+  const filteredConfessions = confessions
+    .filter(c => c.category === category)
+    .reverse();
+
+  res.json(filteredConfessions);
+});
+
+/**
+ * Delete a confession by ID
+ * Protected using a secret token for basic authorization
+ */
+app.delete('/api/v1/confessions/:id', (req, res) => {
+  if (req.headers['x-delete-token'] !== process.env.DELETE_TOKEN) {
+    return res.status(403).json({ msg: 'no permission' });
+  }
+
+  const id = Number(req.params.id);
+
+  const index = confessions.findIndex(c => c.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ msg: 'not found' });
+  }
+
+  const deletedConfession = confessions.splice(index, 1);
+
+  console.log(`Deleted confession with ID ${id}`);
+
+  res.json({
+    msg: "ok",
+    item: deletedConfession[0]
+  });
+});
+
+/**
+ * Start server using environment variable
+ */
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
