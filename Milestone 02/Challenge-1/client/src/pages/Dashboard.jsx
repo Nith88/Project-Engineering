@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import AddTask from "../components/AddTask";
 import TaskList from "../components/TaskList";
-import MotivationWidget from "../components/MotivationWidget";
+import FocusTimer from "../components/FocusTimer";
 import { getTasks } from "../api/taskApi";
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
+  const [focusModeEnabled, setFocusModeEnabled] = useState(false);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -34,6 +35,12 @@ export default function Dashboard() {
       <header>
         <h1>FocusForge</h1>
         <p>Stay focused, stay productive.</p>
+        <button 
+          onClick={() => setFocusModeEnabled(!focusModeEnabled)}
+          className="focus-toggle"
+        >
+          {focusModeEnabled ? "Disable" : "Enable"} Focus Mode
+        </button>
       </header>
 
       <div className="main-content">
@@ -44,7 +51,7 @@ export default function Dashboard() {
         </div>
 
         <aside className="sidebar">
-          <MotivationWidget />
+          {focusModeEnabled && <FocusTimer />}
         </aside>
       </div>
     </div>
