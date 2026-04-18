@@ -1,42 +1,45 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+// Mock data for tasks since Prisma is not configured
+let mockTasks = [
+  { id: 1, title: "Complete project setup", completed: false, createdAt: new Date() },
+  { id: 2, title: "Implement Focus Timer", completed: true, createdAt: new Date() }
+];
 
 exports.getTasks = async (req, res) => {
   try {
-    const tasks = await prisma.task.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-    res.json(tasks);
+    res.json(mockTasks);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch tasks" });
+    res.status(500).json({ error: error.message });
   }
 };
 
 exports.createTask = async (req, res) => {
-  const { title } = req.body;
-  if (!title) {
-    return res.status(400).json({ error: "Title is required" });
-  }
   try {
-    const newTask = await prisma.task.create({
-      data: { title },
-    });
-    res.status(201).json(newTask);
+    const { title } = req.body;
+    const newTask = {
+      id: Date.now(),
+      title,
+      completed: false,
+      createdAt: new Date()
+    };
+    mockTasks.unshift(newTask);
+    res.json(newTask);
   } catch (error) {
-    res.status(500).json({ error: "Failed to create task" });
+    res.status(500).json({ error: error.message });
   }
 };
 
 exports.updateTask = async (req, res) => {
-  const { id } = req.params;
-  const { completed } = req.body;
   try {
-    const updatedTask = await prisma.task.update({
-      where: { id: parseInt(id) },
-      data: { completed },
-    });
-    res.json(updatedTask);
+    const { id } = req.params;
+    const { completed } = req.body;
+    const taskIndex = mockTasks.findIndex(task => task.id == id);
+    if (taskIndex !== -1) {
+      mockTasks[taskIndex].completed = completed;
+      res.json(mockTasks[taskIndex]);
+    } else {
+      res.status(404).json({ error: "Task not found" });
+    }
   } catch (error) {
-    res.status(500).json({ error: "Failed to update task" });
+    res.status(500).json({ error: error.message });
   }
 };
