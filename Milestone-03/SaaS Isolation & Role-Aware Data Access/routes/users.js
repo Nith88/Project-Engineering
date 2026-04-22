@@ -1,34 +1,47 @@
-const express = require('express');
+import express from "express";
+import { User } from "../models/User.js";
+
 const router = express.Router();
-const db = require('../db');
 
-// List all users for the workforce manager
-router.get('/', async (req, res) => {
+// GET all users (tenant-safe + role-safe)
+router.get("/", async (req, res) => {
   try {
-    // Deliberately selects all fields, exposing sensitive data
-    const { rows } = await db.query('SELECT * FROM users');
-    res.json(rows);
+    const users = await User.find({ tenant_id: req.user.tenant_id });
+
+    const safeUsers = users.map((u) => {
+      if (req.user.role === "admin") {
+        return {
+          id: u.id,
+          full_name: u.full_name,
+          email: u.email,
+          role: u.role,
+          salary: u.salary,
+          tenant_id: u.tenant_id,
+        };
+      }
+
+      if (req.user.role === "manager") {
+        return {
+          id: u.id,
+          full_name: u.full_name,
+          email: u.email,
+          role: u.role,
+          tenant_id: u.tenant_id,
+        };
+      }
+
+      // user role
+      return {
+        id: u.id,
+        full_name: u.full_name,
+        email: u.email,
+      };
+    });
+
+    res.json(safeUsers);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to retrieve users.' });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Single user profile view
-router.get('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { rows } = await db.query('SELECT * FROM users WHERE id = $1', [id]);
-    
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'User not found.' });
-    }
-    
-    res.json(rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to find user.' });
-  }
-});
-
-module.exports = router;
+export default router;
