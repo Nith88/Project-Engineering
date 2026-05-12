@@ -1,9 +1,9 @@
 function ErrorMessage({ message, onRetry }) {
   return (
-    <div className="flex flex-col items-center justify-center p-10 text-center">
-      <div className="text-6xl mb-4">😵</div>
+    <div className="flex flex-col items-center justify-center p-8 text-center">
+      <div className="text-5xl mb-4">😵</div>
 
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">
+      <h2 className="text-xl font-bold text-gray-800 mb-2">
         Something went wrong
       </h2>
 
@@ -14,7 +14,7 @@ function ErrorMessage({ message, onRetry }) {
       {onRetry && (
         <button
           onClick={onRetry}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           Try Again
         </button>
