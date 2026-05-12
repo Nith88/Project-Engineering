@@ -1,39 +1,58 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { Pool } = require('pg');
+const { PrismaPg } = require('@prisma/adapter-pg');
 
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+const adapter = new PrismaPg(pool);
+
+const prisma = new PrismaClient({
+  adapter,
+});
+
+// ✅ Calculate score (single source of truth)
+const calculateScore = async () => {
+  const tasks = await prisma.task.findMany();
+
+  let score = 0;
+
+  tasks.forEach(task => {
+    if (task.completed) {
+      score += task.important ? 20 : 10;
+    }
+  });
+
+  return score;
+};
+
+// ✅ Get tasks + score
 const getTasks = async (req, res) => {
   try {
     const tasks = await prisma.task.findMany({
       orderBy: { createdAt: 'desc' }
     });
-    res.json(tasks);
+
+    const score = await calculateScore();
+
+    res.json({ tasks, score });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch tasks' });
   }
 };
 
+// ✅ Create task
 const createTask = async (req, res) => {
-  const { title } = req.body;
+  const { title, important } = req.body;
+
   try {
     const task = await prisma.task.create({
-      data: { title }
+      data: {
+        title,
+        important: important || false
+      }
     });
-    
-    // TODO: Client mentioned "important tasks" but this was never implemented.
-    // We should probably track if a task is "important" here.
-
-    
-    // BROKEN LOGIC: Inconsistently update score on task creation
-    // This part updates the database record directly
-    const currentScore = await prisma.score.findFirst();
-    if (currentScore) {
-      await prisma.score.update({
-        where: { id: currentScore.id },
-        data: { value: currentScore.value + 5 }
-      });
-    } else {
-      await prisma.score.create({ data: { value: 5 } });
-    }
 
     res.status(201).json(task);
   } catch (error) {
@@ -41,29 +60,16 @@ const createTask = async (req, res) => {
   }
 };
 
+// ✅ Update task (mark completed)
 const updateTask = async (req, res) => {
   const { id } = req.params;
   const { completed } = req.body;
+
   try {
     const task = await prisma.task.update({
       where: { id: parseInt(id) },
       data: { completed }
     });
-
-    // NOTE: productivity score should probably consider task importance.
-    // If a task is "important", it should yield more points.
-
-
-    // BROKEN LOGIC: Completing a task increases score again
-    if (completed) {
-      const currentScore = await prisma.score.findFirst();
-      if (currentScore) {
-        await prisma.score.update({
-          where: { id: currentScore.id },
-          data: { value: currentScore.value + 10 }
-        });
-      }
-    }
 
     res.json(task);
   } catch (error) {
@@ -71,13 +77,15 @@ const updateTask = async (req, res) => {
   }
 };
 
+// ✅ Delete task
 const deleteTask = async (req, res) => {
   const { id } = req.params;
+
   try {
     await prisma.task.delete({
       where: { id: parseInt(id) }
     });
-    // BROKEN LOGIC: Deleting a task does not reduce the score.
+
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete task' });
