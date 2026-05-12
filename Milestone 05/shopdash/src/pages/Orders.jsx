@@ -1,13 +1,49 @@
 import React from 'react';
 import { useOrders } from '../hooks/useOrders';
 import OrderCard from '../components/OrderCard';
+import { SkeletonCard, ErrorMessage, EmptyState } from '../components/states';
 
 const Orders = () => {
-  const { data: orders, isLoading, error } = useOrders();
+  const { data: orders, isLoading, error, refetch } = useOrders();
 
-  // DELIBERATE GAP: isLoading and error are ignored.
-  // No check for orders.length === 0.
+  // 1. LOADING STATE
+  if (isLoading) {
+    return (
+      <div className="p-8 space-y-4">
+        {Array(4).fill(0).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
+    );
+  }
 
+  // 2. ERROR STATE
+  if (error) {
+    return (
+      <div className="p-8">
+        <ErrorMessage
+          message="Failed to load orders. Please check your connection and try again."
+          onRetry={refetch}
+        />
+      </div>
+    );
+  }
+
+  // 3. EMPTY STATE
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="p-8">
+        <EmptyState
+          title="No orders yet"
+          message="Your orders will appear here once you start placing purchases."
+          actionLabel="Browse products"
+          onAction={() => console.log("navigate to products")}
+        />
+      </div>
+    );
+  }
+
+  // 4. SUCCESS STATE
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
@@ -18,7 +54,7 @@ const Orders = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {orders && orders.map(order => (
+        {orders.map(order => (
           <OrderCard key={order.id} order={order} />
         ))}
       </div>
