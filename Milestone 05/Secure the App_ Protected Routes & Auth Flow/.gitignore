@@ -1,0 +1,15 @@
+# Dependency directories
+node_modules/
+
+# Build output
+dist/
+
+# Local env files
+.env
+.env.local
+
+# NPM generated files
+package-lock.json
+
+# Editor artifacts
+.DS_Store
